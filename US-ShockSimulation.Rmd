@@ -1,0 +1,116 @@
+---
+title: "US-ShockSimulation"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Domar weights v are calculated as 
+$v = \frac{\alpha}{n}(I-(1-\alpha)W)^{-1}\mathbf{1} $
+
+with $\alpha =0.3333$ (choice in Acemoglu(2012)).
+
+
+Acemoglu (2017) calculate Domar weights of a networked economy in two different ways. One is with sales data, dividing industries sales over GDP. This is an empirical Domar weight. The other way is as in the above equation. Instead of a normalised matrix W which is multiplied by $(1-\alpha) < 1$, the technical coefficient matrix is used to calculate the Domar weight (This is in effect very close to using the normalised matrix). 
+
+
+```{r}
+
+source("./1_3_readAndRun")
+
+W <- CC %>% nesting_normalisingCCDFs(1,1,0, "shock")
+
+source("./SchockSimulation.R")
+
+schocked_Economies <- simulate_shocks(W)
+
+
+```
+
+
+
+```{r}
+library(ggplot2)
+library(ggExtra)
+library(ggridges)
+# https://hydroecology.net/plotting-marginal-distributions-redux/
+ggplot(data=d1, aes(timestep, shocks)) + geom_line() + 
+  geom_vridgeline(data = res.select, aes(group = time, width = ..density..), 
+                  stat = "ydensity", scale = 5000, fill = NA, color = "blue", size = 1) 
+
+ggplot(data=d1, aes(timestep, shocks)) + geom_point() + geom_line()
+p1 <- ggplot(data=d1, aes(timestep, shocks)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -3.7, label =  paste("sd = ", round(sd(shocks), digits = 3))) # suppress points, only show lines
+ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
+# https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
+# https://github.com/daattali/ggExtra/issues/109
+p2 <- ggplot(data=d1, aes(timestep, out_agg)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -3.7, label =  paste("sd = ", round(sd(out_agg), digits = 3))) # suppress points, only show lines
+ggMarginal(p2, margins="y", type = "histogram", fill=NA)
+
+
+c1 <- rgb(169, 169, 169, max = 255, alpha = 10)
+hist(out_agg, breaks = 1000, xlim = c(-15,15), col = c1)
+par(new=TRUE)
+plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")
+# is it fat tailed? check CCDF
+
+
+
+```
+
+
+
+```{r}
+#-----
+# CCDF
+#-----
+
+out_agg_sorted = sort(out_agg, decreasing = TRUE)
+CCD = cumsum(out_agg_sorted)
+prob = cumsum(1:n_shocks)
+sum(out_agg)
+plot(1:n_shocks, CCD)
+plot(out_agg_sorted ,prob)
+plot(log(out_agg_sorted), log(prob))
+
+x = seq(from= -15, to = 15, length.out=1000)
+CCDF_normal = sort(pnorm(x,mean(out_agg), sd(out_agg)), decreasing = TRUE)
+plot(log(CCDF_normal),log(cumsum(1:1000)) , type = "l")
+lines(log(CCDF_normal),log(cumsum(1:1000)))
+
+
+
+# how does the tail of a normal cdf look like? plot also in picture
+# https://stackoverflow.com/questions/59270647/how-to-plot-the-standard-normal-cdf-in-r
+# https://stats.stackexchange.com/questions/26903/interpreting-the-difference-between-lognormal-and-power-law-distribution-networ
+# https://demonstrations.wolfram.com/PowerLawTailsInLogNormalData/
+# wolframalpha shrinks distribution further and further to tail
+
+plot(pnorm(-5:10, mean=0, sd=4))
+curve(pnorm, from = -5, to=2)
+```
+
+
+
+### Q-Q plots aggregate output US network economy and shocks
+
+```{r}
+
+fluctuations <- bind_cols(list(out_agg = out_agg, shocks = Shocks[1,]))
+
+ggplot(data = fluctuations, aes(sample=out_agg)) + geom_qq() + geom_qq_line() + theme_minimal()
+ggplot(data = fluctuations, aes(sample=shocks)) + geom_qq() + geom_qq_line() + theme_minimal()
+
+
+```
+
+
+
+
+### Q-Q plots aggregate output structureless economy and shocks
+
+```{r}
+
+```
+
