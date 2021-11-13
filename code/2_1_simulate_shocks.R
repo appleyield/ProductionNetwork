@@ -5,14 +5,73 @@ setwd("./data/German")
 # Output: list with shocks and tibble of different types of aggregate output
 
 
-simulate_shocks <- function(){
+simulate_shocks <- function(W, shock_distribution, X, n_shocks){
   
   
-  return()
+  n <- dim(W)[1]
+  I <- diag(1, n, n)
+  alpha=0.3333  # Acemoglu (2012) use an alpha of 0.3333 for their influence vector v
+  L <- solve(I-(1-alpha)*W)
+  
+  # set n_shocks = 1000 as default
+  if (missing(n_shocks)){
+    n_shocks = 10^3
+  } 
+  
+  Shocks <- matrix(0, n, n_shocks)
+  if (shock_distribution== "normal"){
+    Shocks <- rnorm(n*n_shocks, 0, 1)
+    'for (i in 1:n_shocks){
+      shocks = rnorm(n, 0, 1)
+      Shocks[,i] = shocks
+    }'
+  }else if (shock_distribution == "cauchy"){
+    for (i in 1:n_shocks){
+      shocks = rcauchy(n, 0, 1)
+      Shocks[,i] = shocks
+    }
+  }
+  
+  
+  # three different influence vectors: structureless economy, output share, network, random network???
+  # 1 counterfactual economy with no heterogeneity
+  homogenousEconomy <- (1/n)*rep(1, n)
+  # 2 counterfactual economy with no primitive heterogeneity
+  networkedEconomy <- (1/n)* colSums(L)
+  # 3 Calibration with Domar weights matched to the corresponding values in the U.S. data.
+  # I don't have Domar weights, or is output share Domar weight???
+  # I use sector sales / aggregate output as Domar weight
+  #heterogenousOutputEconomy <- X[[1]] / sum(X)   final outputs X must be cut to 71 industries first
+  v <- lst(homogenousEconomy, networkedEconomy) # , heterogenousOutputEconomy 
+  
+  #v <- tibble(v1, v2)
+  
+  
+  #shock_output <- v %>% map(.x=., .f = ~ shocking(., n_shocks, Shocks)) %>% reduce(left_join)
+  shock_output <- v %>% map_dfc(.x=., .f = ~ shocking(., n_shocks, Shocks)) %>% mutate(timestep = 1:n_shocks)
+  
+  
+  #ff <- v %>% mutate(across(everything(), ~ shocking(.x, n_shocks, Shocks)))
+  
+  return(lst(Shocks, shock_output))
 }
 
 
-year=2017
+
+shocking <- function(v, n_shocks, Shocks){
+  out_agg <- c()
+  for (i in 1:n_shocks){
+    out_agg[i] = v %*% Shocks[(1+((i-1)*n)):(i*n)]
+  }
+  
+  #return(tibble(timestep=c(1:length(out_agg)), out_agg))
+  #return(tibble(timestep=c(1:length(v)), v))
+  
+  return(out_agg)
+}
+
+
+'year=2017
 W <- read.table(paste("W", paste(year, ".csv", sep = ""), sep = ""), sep=";", header = FALSE)
 I = diag(1, 71,71)
 rowSums(W) # normalisierte matrix W hat rowSums all 1
@@ -26,182 +85,6 @@ L = solve(I-(1-alpha)*W)
 # also create large graph with realistic degree distribution with configuration model
 # and then cluster this graph several times into smaller sized graphs [nice exercise :D]
 
-
-# 1. create directed graph a la Newman chapter 12.11.1, then multiply weights?
-# (first try an unweighted directed network)
-
-# I need to define the degree k of edges beforehand the matching process
-p = (k_i * k_j) / 2*m # probability for an edge between i and j (G(n,m) version)
-
-# G(n,p) version 
-p = (c_i * c_j) / 2*m  # j not i  
-p = (c_i * c_j) / 4*m  # j == i
-
-
-# estimate density of sequence
-sq <- rnorm(100, 5, 3)
-edf <- density(sq)
-
-hist(sq)
-line(edf)
-plot(edf)
-sample(edf, 10) 
-#https://www.r-bloggers.com/2014/07/making-random-draws-from-an-arbitrarily-defined-pdf/
-#https://stackoverflow.com/questions/28627487/how-do-i-sample-from-a-custom-distribution
-#https://stats.stackexchange.com/questions/12843/generating-random-samples-from-a-custom-distribution
-
-
-
-#--------------------
-# CONFIGURATION Model
-#--------------------
-# draw degree sequence dseq from a fat tailed distribution
-
-library(rlist)
-
-degrees <- list()
-As <- list()
-N <- c(100,10^3)
-for (l in 1:length(N)){
-  n = N[l]
-  k_in_seq <- c(1,2,3)
-  while (length(k_in_seq) < n) {
-    k_in_seq = round(rcauchy(1.015*n, 25, 1))
-    k_in_seq =  k_in_seq[-which(k_in_seq <= 0 | k_in_seq >= n)]
-  }
-  k_out_seq = k_in_seq
-  degrees[l] <- k_in_seq[1:n]
-  
-  As <- list.append(As, Stub_matching(n, k_in_seq, k_out_seq))  
-}
-names(As) <- N
-
-As[1]
-
-names(degrees) <- c("100", "1000", "10000")
-names(As) <- c("100", "1000")
-
-
-As$`100`
-
-
-
-
-
-
-hist(k_in_seq)
-sum(k_in_seq)
-#k_out_seq = round(rcauchy(3*n, 25, 1))
-#k_out_seq =  k_out_seq[-which(k_out_seq <= 25)]
-hist(k_out_seq)
-sum(k_out_seq)
-
-
-Stub_matching <- function(n, indeg, outdeg){
-  A <- diag(0, n, n)
-  h = 0
-  while (sum(k_in_seq[1:n]) > 0) {
-    p_in = cumsum(k_in_seq[1:n])/sum(k_in_seq[1:n])
-    p_out = cumsum(k_out_seq[1:n])/sum(k_out_seq[1:n])
-    z_in = runif(1, 0, 1)
-    z_out = runif(1,0,1)
-    
-    i <- min(which(p_in >= z_in))
-    j <- min(which(p_out >= z_out))
-    
-    A[i,j] = 1
-    k_in_seq[i] = k_in_seq[i] -1
-    k_out_seq[j] = k_out_seq[j] -1
-    
-    h = h + 1
-    if (h > 60000){
-      break
-    }
-  }
-  return(A)
-}
-
-
-
-
-
-As <- list()
-As[1] <- A
-As[2] <- A
-As[3] <- A
-names(As) <- c("100", "1000", "10000")
-
-
-C <- list(a, matrix(1,1,1))
-a <- matrix(1,5,5)
-b <- matrix(1,3,7)
-C[2] <- a
-C[1]
-library(rlist)
-C <- list.append(C, b) # different object types can be appended with list.append() from rlist 
-
-
-# store vectors in list
-e<- list()
-v <- c(1,3)
-b <- c(8,9,7)
-e <- list(v)
-e <- list(e, list(b))
-e <- list(v,b)
-names(e) <- c("100", "1000")
-e$`100`
-
-
-which(is.na(A))
-
-# degrees
-deg1 = colSums(A)
-deg2 = rowSums(A)
-hist(deg1)
-hist(deg2)
-
-
-# random graph G(n,p)
-library(igraph)
-n = 100
-g <- sample_gnp(n, p = 0.3, directed = TRUE)
-A <- as_adjacency_matrix(g, sparse=FALSE)
-I = diag(1, n, n)
-L = solve(I-A)
-
-#--------------------
-# Community detection
-#--------------------
-# https://www.r-bloggers.com/2020/03/community-detection-with-louvain-and-infomap/
-# https://www.r-bloggers.com/2012/06/summary-of-community-detection-algorithms-in-igraph-0-6/
-# https://www.sixhat.net/finding-communities-in-networks-with-r-and-igraph.html
-
-library(igraph)
-
-g <- graph_from_adjacency_matrix(A, "directed", weighted = TRUE)
-
-# Louvain algorithm
-
-# Infomap algorithm
-
-im <- cluster_infomap(g, modularity=FALSE)
-communities(im) # all in the same community?
-plot(im)
-
-eb <- cluster_edge_betweenness(g)
-
-
-# https://stats.stackexchange.com/questions/301466/how-to-detect-k-number-of-communities-in-a-weighted-graph-network
-# https://stackoverflow.com/questions/38896546/setting-size-of-detected-communities-in-r/38899957#38899957
-# "cut_at method simply gives you back the community indices for all nodes in the graph (i.e. a simple numeric vector)."
-
-walk <- cluster_walktrap(g) 
-walk[1]
-cut_at(walk, no = 10) 
-
-eb <- cluster_edge_betweenness(g)
-eb[4]
-eb_cut <- cut_at(eb, no = 10) 
 
 
 
@@ -326,8 +209,4 @@ plot(10000+cumsum(rcauchy(1000)), type = "l")
 
 timestep <- 1:n_shocks
 d1 <- data.frame(timestep, shocks, out_agg)
-
-
-
-
-
+'

@@ -18,25 +18,35 @@ Acemoglu (2017) calculate Domar weights of a networked economy in two different 
 
 ```{r}
 
-source("./1_3_readAndRun")
+#source("./code/1_4_readAndRunIndegrees.R")
+library(readr)
+#W <- readrun_matrices("DE", 2015, bs=FALSE, "shocks")
+W <- read_delim("./data/German/W2015.csv", delim = ";", col_names = FALSE)
 
-W <- CC %>% nesting_normalisingCCDFs(1,1,0, "shock")
+#W <- CC %>% nesting_normalisingCCDFs(1,1,0, "shock")
 
-source("./SchockSimulation.R")
+# also read US and German output shares here
+# for Germany needs total output in data
+X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)
 
-schocked_Economies <- simulate_shocks(W)
+# for US??
+
+source("./code/2_1_simulate_shocks.R")
+
+shocked_Economies <- simulate_shocks(W, "normal", X2015)
 
 
 ```
 
 
 
-```{r}
+```{r shock-timeseries}
+
 library(ggplot2)
 library(ggExtra)
 library(ggridges)
 # https://hydroecology.net/plotting-marginal-distributions-redux/
-ggplot(data=d1, aes(timestep, shocks)) + geom_line() + 
+ggplot(data= shocked_Economies$shock_output , aes(timestep, structurelessEconomy)) + geom_line() + 
   geom_vridgeline(data = res.select, aes(group = time, width = ..density..), 
                   stat = "ydensity", scale = 5000, fill = NA, color = "blue", size = 1) 
 
@@ -54,6 +64,38 @@ hist(out_agg, breaks = 1000, xlim = c(-15,15), col = c1)
 par(new=TRUE)
 plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")
 # is it fat tailed? check CCDF
+
+
+
+```
+```{r timeseries_AggOut_homogenousEconomy}
+
+
+
+
+
+
+
+```
+
+
+
+```{r timeseries_AggOut_networkedEconomy}
+
+
+
+
+
+
+
+```
+
+
+```{r timeseries_AggOut_heterogenousOutputEconomy}
+
+
+
+
 
 
 
@@ -95,7 +137,7 @@ curve(pnorm, from = -5, to=2)
 
 ### Q-Q plots aggregate output US network economy and shocks
 
-```{r}
+```{r Q-Q}
 
 fluctuations <- bind_cols(list(out_agg = out_agg, shocks = Shocks[1,]))
 
