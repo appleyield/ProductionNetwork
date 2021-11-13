@@ -2,10 +2,8 @@ library(dplyr)
 library(purrr)
 
 
-readrun_matrices <- function(country, years, bs){
+readrun_matrices <- function(country, distribution){
   source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_1_nestings_CCDFs.R")
-  
-  source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_2_estimations_outdegree_smaller.R")
   
   
   if (country == "US"){
@@ -16,13 +14,17 @@ readrun_matrices <- function(country, years, bs){
     
     names(CC) <- c(1972, 1977, 1982, 1987, 1992, 1997, 2002)
     
-    OutdegreesCCDF_nested <- CC %>% nesting_normalisingCCDFs(1,1,0, "outdegree")
+    OutdegreesCCDF_nested <- CC %>% nesting_normalisingCCDFs(1,1,0, distribution)
     
-    #OutdegreesCCDF_nested_0297 <- OutdegreesCCDF_nested %>% filter(year %in% c(1997,2002))
-    OutdegreesCCDF_nested_02 <- OutdegreesCCDF_nested %>% filter(year==years)
+    if (distribution == "shock" | "forwardlinkage"){
+      library(readr)
+      
+      # also read US and German output shares here
+      # for Germany needs total output in data
+      X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)
+    }
     
-    # bs = TRUE activates bootstrapping GoF p-values of distributions 
-    Result_tables <- estimate_outdegree(OutdegreesCCDF_nested_02, bs)
+    
   }
   
   if (country == "DE"){
@@ -33,16 +35,22 @@ readrun_matrices <- function(country, years, bs){
     
     names(W) <- c(2015, 2016, 2017)
     
-    OutdegreesCCDF_nested <- W %>% nesting_normalisingCCDFs(0,0,1, "outdegree")
+    OutdegreesCCDF_nested <- W %>% nesting_normalisingCCDFs(0,0,1, distribution)
     
-    OutdegreesCCDF_nested_subperiod <- OutdegreesCCDF_nested %>% filter(year==years)
+    if (distribution == "shock" | "forwardlinkage"){
+      library(readr)
+      
+      # also read US and German output shares here
+      # for Germany needs total output in data
+      X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)
+      
+      OutdegreesCCDF_nested <- lst(OutdegreesCCDF_nested, X2015)
+    }
     
-    # bs = TRUE activates bootstrapping GoF p-values of distributions 
-    Result_tables <- estimate_outdegree(OutdegreesCCDF_nested_subperiod, bs)
     
   }
   
-  return(list(Result_tables, OutdegreesCCDF_nested))
+  return(OutdegreesCCDF_nested)
   
 } 
 

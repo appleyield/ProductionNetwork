@@ -17,16 +17,19 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
   source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_3_readAndRunOutdegrees.R")
 
-#yearsUS <- c(1972, 1977, 1982, 1987, 1992, 1997, 2002)
-#yearsDE <- c(2015, 2016, 2017)
+source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_2_estimations_outdegree_smaller.R")
 
 
-years=c(1972, 1977, 1982, 1987, 1992, 1997, 2002)
+years=c(2002)
 #years=2002
 bs=TRUE
-returnedL <- readrun_matrices("US", years, bs)
-Result_tables <- returnedL[[1]]
-OutdegreesCCDF_nested <- returnedL[[2]]
+OutdegreesCCDF_nested <- readrun_matrices("US", "outdegrees")
+
+# filter outdegree?
+#OutdegreesCCDF_nested_subperiod <- OutdegreesCCDF_nested %>% filter(year==years)
+
+# bs = TRUE activates bootstrapping GoF p-values of distributions 
+Result_tables <- estimate_outdegree(OutdegreesCCDF_nested, bs)
 
 ```
 

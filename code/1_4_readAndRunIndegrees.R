@@ -3,9 +3,9 @@ library(purrr)
 
 
 readrun_matrices <- function(country, years, bs){
-  source("./1_1_nestings_CCDFs.R")
+  source("./code/1_1_nestings_CCDFs.R")
   
-  source("./1_2_estimations_outdegree.R")
+  source("./code/1_2_estimations_outdegree.R")
   
   
   if (country == "US"){
