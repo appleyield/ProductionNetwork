@@ -3,11 +3,11 @@ library(purrr)
 
 
 readrun_matrices <- function(country, distribution){
-  source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_1_nestings_CCDFs.R")
+  source("./code/1_1_nestings_CCDFs.R")
   
   
   if (country == "US"){
-    setwd("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/ReplicatingAcemoglu2012")
+    setwd("./data/US")
     
     CC <- c("CC72.csv", "CC77.csv", "CC82.csv", "CC87.csv", "CC92.csv", "CC97.csv", "CC02.csv")%>% 
       map(read.table, header=FALSE, sep=",")
@@ -16,19 +16,19 @@ readrun_matrices <- function(country, distribution){
     
     OutdegreesCCDF_nested <- CC %>% nesting_normalisingCCDFs(1,1,0, distribution)
     
-    if (distribution == "shock" | "forwardlinkage"){
+    if (distribution == "shock" | distribution == "forwardlinkage"){
       library(readr)
       
       # also read US and German output shares here
       # for Germany needs total output in data
-      X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)
+      X2015 <- read_delim("X2015.csv", delim = ";", col_names = FALSE)
     }
     
     
   }
   
   if (country == "DE"){
-    setwd("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland")
+    setwd("./data/German")
     
     W <- c("W2015.csv", "W2016.csv", "W2017.csv")%>% 
       map(read.table, header=FALSE, sep=";")
@@ -37,12 +37,12 @@ readrun_matrices <- function(country, distribution){
     
     OutdegreesCCDF_nested <- W %>% nesting_normalisingCCDFs(0,0,1, distribution)
     
-    if (distribution == "shock" | "forwardlinkage"){
+    if (distribution == "shock" | distribution == "forwardlinkage"){
       library(readr)
       
       # also read US and German output shares here
       # for Germany needs total output in data
-      X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)
+      X2015 <- read_delim("X2015.csv", delim = ";", col_names = FALSE)
       
       OutdegreesCCDF_nested <- lst(OutdegreesCCDF_nested, X2015)
     }

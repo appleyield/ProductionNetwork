@@ -33,7 +33,7 @@ nesting_normalisingCCDFs <- function(W, normalisationYN, deleteZerosYN, orientat
     CCDF_nested <- W_norm %>% map(colSums) %>% nestingCCDFs()
   } else if (degreetype == "indegree"){
     CCDF_nested <- W_norm %>% map(rowSums) %>% map(unname)
-  } else if (degreetype == "shock" | "forwardlinkage"){
+  } else if (degreetype == "shock" | degreetype == "forwardlinkage"){
     CCDF_nested <- W_norm
   }
   

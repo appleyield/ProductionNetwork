@@ -18,8 +18,8 @@ Acemoglu (2017) calculate Domar weights of a networked economy in two different 
 
 ```{r}
 
-#source("./code/1_4_readAndRunIndegrees.R")
-library(readr)
+source("./code/1_3_readAndRunOutdegrees.R")
+'library(readr)
 #W <- readrun_matrices("DE", 2015, bs=FALSE, "shocks")
 W <- read_delim("./data/German/W2015.csv", delim = ";", col_names = FALSE)
 
@@ -27,13 +27,15 @@ W <- read_delim("./data/German/W2015.csv", delim = ";", col_names = FALSE)
 
 # also read US and German output shares here
 # for Germany needs total output in data
-X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)
+X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)'
+
+the_data <- readrun_matrices("DE", "shock")
 
 # for US??
 
 source("./code/2_1_simulate_shocks.R")
 
-shocked_Economies <- simulate_shocks(W, "normal", X2015)
+shocked_Economies <- simulate_shocks(the_data[[1]][[1]], "normal", the_data[[2]])
 
 
 ```
@@ -46,12 +48,12 @@ library(ggplot2)
 library(ggExtra)
 library(ggridges)
 # https://hydroecology.net/plotting-marginal-distributions-redux/
-ggplot(data= shocked_Economies$shock_output , aes(timestep, structurelessEconomy)) + geom_line() + 
+ggplot(data= shocked_Economies$shock_output , aes(timestep, networkedEconomy)) + geom_line() + 
   geom_vridgeline(data = res.select, aes(group = time, width = ..density..), 
                   stat = "ydensity", scale = 5000, fill = NA, color = "blue", size = 1) 
 
-ggplot(data=d1, aes(timestep, shocks)) + geom_point() + geom_line()
-p1 <- ggplot(data=d1, aes(timestep, shocks)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -3.7, label =  paste("sd = ", round(sd(shocks), digits = 3))) # suppress points, only show lines
+ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point() + geom_line()
+p1 <- ggplot(data=shocked_Economies$Shocks, aes(timestep, Shocks)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 1000, y = -4, label =  paste("sd = ", round(sd(shocked_Economies$Shocks[["Shocks"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
 ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
 # https://github.com/daattali/ggExtra/issues/109
@@ -71,6 +73,10 @@ plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")
 ```{r timeseries_AggOut_homogenousEconomy}
 
 
+p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, homogeneousEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -.4, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["homogeneousEconomy"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
+# https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
+# https://github.com/daattali/ggExtra/issues/109
 
 
 
@@ -83,6 +89,10 @@ plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")
 ```{r timeseries_AggOut_networkedEconomy}
 
 
+p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -1.4, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["networkedEconomy"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
+# https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
+# https://github.com/daattali/ggExtra/issues/109
 
 
 

@@ -35,30 +35,30 @@ simulate_shocks <- function(W, shock_distribution, X, n_shocks){
   
   # three different influence vectors: structureless economy, output share, network, random network???
   # 1 counterfactual economy with no heterogeneity
-  homogenousEconomy <- (1/n)*rep(1, n)
+  homogeneousEconomy <- (1/n)*rep(1, n)
   # 2 counterfactual economy with no primitive heterogeneity
   networkedEconomy <- (1/n)* colSums(L)
   # 3 Calibration with Domar weights matched to the corresponding values in the U.S. data.
   # I don't have Domar weights, or is output share Domar weight???
   # I use sector sales / aggregate output as Domar weight
   #heterogenousOutputEconomy <- X[[1]] / sum(X)   final outputs X must be cut to 71 industries first
-  v <- lst(homogenousEconomy, networkedEconomy) # , heterogenousOutputEconomy 
+  v <- lst(homogeneousEconomy, networkedEconomy) # , heterogenousOutputEconomy 
   
   #v <- tibble(v1, v2)
   
   
   #shock_output <- v %>% map(.x=., .f = ~ shocking(., n_shocks, Shocks)) %>% reduce(left_join)
-  shock_output <- v %>% map_dfc(.x=., .f = ~ shocking(., n_shocks, Shocks)) %>% mutate(timestep = 1:n_shocks)
+  shock_output <- v %>% map_dfc(.x=., .f = ~ shocking(., n_shocks, Shocks, n)) %>% mutate(timestep = 1:n_shocks)
   
   
   #ff <- v %>% mutate(across(everything(), ~ shocking(.x, n_shocks, Shocks)))
   
-  return(lst(Shocks, shock_output))
+  return(lst(Shocks=tibble(timestep=1:(n_shocks*n), Shocks), shock_output))
 }
 
 
 
-shocking <- function(v, n_shocks, Shocks){
+shocking <- function(v, n_shocks, Shocks, n){
   out_agg <- c()
   for (i in 1:n_shocks){
     out_agg[i] = v %*% Shocks[(1+((i-1)*n)):(i*n)]
