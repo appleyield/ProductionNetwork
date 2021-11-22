@@ -4,11 +4,11 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 Domar weights v are calculated as 
-$v = \frac{\alpha}{n}(I-(1-\alpha)W)^{-1}\mathbf{1} $
+$v = \frac{\alpha}{n}(I-(1-\alpha)W)^{-1}\mathbf{1}$
 
 with $\alpha =0.3333$ (choice in Acemoglu(2012)).
 
@@ -29,73 +29,74 @@ W <- read_delim("./data/German/W2015.csv", delim = ";", col_names = FALSE)
 # for Germany needs total output in data
 X2015 <- read_delim("./data/German/X2015.csv", delim = ";", col_names = FALSE)'
 
-the_data <- readrun_matrices("DE", "shock")
+the_data <- readrun_matrices("US", "shock")
 
 # for US??
-
 source("./code/2_1_simulate_shocks.R")
 
-shocked_Economies <- simulate_shocks(the_data[[1]][[1]], "normal", the_data[[2]])
+shocked_Economies <- simulate_shocks(the_data[["2002"]], "laplace", n_shocks = 10^4)
+"laplace" # double exponential
 
 
 ```
+### Comparison of shock volatility and aggregate volatilty in differently structured economies
 
+All time series are plotted on the same interval of the y-axis to illustrate how volatile aggregate output in different economies is in comparison to shocks. As expected from the analytic statements, volatility is smoothed strongest in the homogeneous economy. Volatility doesn't vanish so fast in the networked economy.
 
 
 ```{r shock-timeseries}
 
 library(ggplot2)
 library(ggExtra)
-library(ggridges)
+#library(ggridges)
 # https://hydroecology.net/plotting-marginal-distributions-redux/
-ggplot(data= shocked_Economies$shock_output , aes(timestep, networkedEconomy)) + geom_line() + 
+'ggplot(data= shocked_Economies$shock_output , aes(timestep, networkedEconomy)) + geom_line() + 
   geom_vridgeline(data = res.select, aes(group = time, width = ..density..), 
-                  stat = "ydensity", scale = 5000, fill = NA, color = "blue", size = 1) 
+                  stat = "ydensity", scale = 5000, fill = NA, color = "blue", size = 1) '
 
-ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point() + geom_line()
-p1 <- ggplot(data=shocked_Economies$Shocks, aes(timestep, Shocks)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 1000, y = -4, label =  paste("sd = ", round(sd(shocked_Economies$Shocks[["Shocks"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+#ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point() + geom_line()
+
+ylimits <- max(shocked_Economies$Shocks$Shocks)
+p1 <- ggplot(data=shocked_Economies$Shocks, aes(timestep, Shocks)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = length(shocked_Economies$Shocks$Shocks) * (1/4), y = -ylimits, label =  paste("sd = ", round(sd(shocked_Economies$Shocks[["Shocks"]]), digits = 3))) + ylim(c(-ylimits,ylimits)) # suppress points, only show lines
 ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
 # https://github.com/daattali/ggExtra/issues/109
-p2 <- ggplot(data=d1, aes(timestep, out_agg)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -3.7, label =  paste("sd = ", round(sd(out_agg), digits = 3))) # suppress points, only show lines
-ggMarginal(p2, margins="y", type = "histogram", fill=NA)
+
+'p2 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, homogeneousEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -.4, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["homogeneousEconomy"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+ggMarginal(p2, margins="y", type = "histogram", fill=NA) #type="density"
 
 
-c1 <- rgb(169, 169, 169, max = 255, alpha = 10)
-hist(out_agg, breaks = 1000, xlim = c(-15,15), col = c1)
-par(new=TRUE)
-plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")
-# is it fat tailed? check CCDF
 
+p3 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -1.4, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["networkedEconomy"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+ggMarginal(p3, margins="y", type = "histogram", fill=NA) #type="density"
+'
 
 
 ```
+
+
 ```{r timeseries_AggOut_homogenousEconomy}
 
 
-p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, homogeneousEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -.4, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["homogeneousEconomy"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, homogeneousEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = length(shocked_Economies$shock_output$timestep) * (1/6) , y = -ylimits*0.9, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["homogeneousEconomy"]]), digits = 3))) + ylim(c(-ylimits,ylimits)) # suppress points, only show lines
 ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
-# https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
-# https://github.com/daattali/ggExtra/issues/109
-
-
-
 
 
 ```
-
+Volatility of aggregate output in networked economy has decreased compared to shocks but is higher than in homogenous economy. Due to the law of large numbers, the more disaggregated the economy gets (n_sectors --> $\infty$) the lower should be the volatility. With more sectors, the aggregate output time series will center narrower and narrower around the mean.
 
 
 ```{r timeseries_AggOut_networkedEconomy}
 
 
-p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -1.4, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["networkedEconomy"]]), digits = 3))) + ylim(c(-4.1,4.1)) # suppress points, only show lines
+p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = length(shocked_Economies$shock_output$timestep) * (1/6), y = -ylimits*0.9, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["networkedEconomy"]]), digits = 3))) + ylim(c(-ylimits,ylimits)) # suppress points, only show lines
 ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
 # https://github.com/daattali/ggExtra/issues/109
 
 
-
+# is it fat tailed? check CCDF
+# QQ-plot
 
 
 ```
@@ -113,7 +114,7 @@ ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 
 
 
-```{r}
+```{r, eval=FALSE}
 #-----
 # CCDF
 #-----
@@ -147,12 +148,24 @@ curve(pnorm, from = -5, to=2)
 
 ### Q-Q plots aggregate output US network economy and shocks
 
-```{r Q-Q}
+With too low shock sample size aggregate output seem to be less normal distributed than shocks.
 
-fluctuations <- bind_cols(list(out_agg = out_agg, shocks = Shocks[1,]))
+[x- und y-Achse muss überall selbe skalierung haben um optisch den Vergleich zwischen den QQ-plots zu haben]: The shocks are divided by the euclidean norm of the influence vector v. This scales shocks in each type of economy to the same interval.
 
-ggplot(data = fluctuations, aes(sample=out_agg)) + geom_qq() + geom_qq_line() + theme_minimal()
-ggplot(data = fluctuations, aes(sample=shocks)) + geom_qq() + geom_qq_line() + theme_minimal()
+
+As expected from the analytical results, aggregate output of the networked economy deviates more from the normal distribution in the tails than aggregate output of the homogeneous economy.
+
+
+
+
+
+```{r QQ-plot_networkedVSshocks, fig.show="hold", out.width="50%"}
+
+#fluctuations <- bind_cols(list(out_agg = out_agg, shocks = Shocks[1,]))
+
+# * (1/shocked_Economies$euklidian_norm_v$networkedEconomy)
+ggplot(data = shocked_Economies$shock_output, aes(sample=networkedEconomy* (1/shocked_Economies$euklidian_norm_v_tibble$networkedEconomy))) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("networked") + xlab("") + ylab("")
+ggplot(data = shocked_Economies$Shocks, aes(sample=Shocks)) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("shocks") + xlab("") + ylab("")
 
 
 ```
@@ -160,9 +173,13 @@ ggplot(data = fluctuations, aes(sample=shocks)) + geom_qq() + geom_qq_line() + t
 
 
 
-### Q-Q plots aggregate output structureless economy and shocks
+### Q-Q plots aggregate output homogenous economy and shocks
 
-```{r}
+```{r QQ-plot_homogenousVSshocks, fig.show="hold", out.width="50%"}
+
+# *(1/shocked_Economies$euklidian_norm_v$homogeneousEconomy)
+ggplot(data = shocked_Economies$shock_output, aes(sample=homogeneousEconomy*(1/shocked_Economies$euklidian_norm_v_tibble$homogeneousEconomy))) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("homogeneous") + xlab("") + ylab("")
+ggplot(data = shocked_Economies$Shocks, aes(sample=Shocks)) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("shocks") + xlab("") + ylab("")
 
 ```
 

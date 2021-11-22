@@ -39,7 +39,6 @@ Result_tables <- estimate_outdegree(OutdegreesCCDF_nested, bs)
 
 Year: `r years`
 
-
 $~$
 
 ### Fitted distributions parameters

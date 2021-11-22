@@ -7,6 +7,8 @@ readrun_matrices <- function(country, distribution){
   
   
   if (country == "US"){
+    orig_wd <- getwd()
+    on.exit(setwd(orig_wd))
     setwd("./data/US")
     
     CC <- c("CC72.csv", "CC77.csv", "CC82.csv", "CC87.csv", "CC92.csv", "CC97.csv", "CC02.csv")%>% 
@@ -16,18 +18,20 @@ readrun_matrices <- function(country, distribution){
     
     OutdegreesCCDF_nested <- CC %>% nesting_normalisingCCDFs(1,1,0, distribution)
     
-    if (distribution == "shock" | distribution == "forwardlinkage"){
+    'if (distribution == "shock" | distribution == "forwardlinkage"){
       library(readr)
       
       # also read US and German output shares here
       # for Germany needs total output in data
       X2015 <- read_delim("X2015.csv", delim = ";", col_names = FALSE)
-    }
+    }'
     
     
   }
   
   if (country == "DE"){
+    orig_wd <- getwd()
+    on.exit(setwd(orig_wd))
     setwd("./data/German")
     
     W <- c("W2015.csv", "W2016.csv", "W2017.csv")%>% 
