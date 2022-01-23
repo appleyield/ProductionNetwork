@@ -7,30 +7,32 @@ output: github_document
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
-Domar weights v are calculated as 
-$v = \frac{\alpha}{n}(I-(1-\alpha)W)^{-1}\mathbf{1} $
-
+Influence vectors v are calculated as $v =(1/n) (I-(1-\alpha)W)^{-1}\mathbf{1}$
 with $\alpha =0.3333$ (choice in Acemoglu(2012)).
 
 
-Acemoglu (2017) calculate Domar weights of a networked economy in two different ways. One is with sales data, dividing industries sales over GDP. This is an empirical Domar weight. The other way is as in the above equation. Instead of a normalised matrix W which is multiplied by $(1-\alpha) < 1$, the technical coefficient matrix is used to calculate the Domar weight (This is in effect very close to using the normalised matrix). 
+Acemoglu (2017) calculate Domar weights of a networked economy in two different ways. One is with sales data, dividing industries sales over GDP. This is an empirical Domar weight. The other way is as in the above equation.
 
 
 ```{r}
 
 source("./code/1_3_readAndRunOutdegrees.R")
 
-the_data <- readrun_matrices("DE", "shock")
+the_data <- readrun_matrices("DE", "shock", order=1)
+
 
 # for US??
 source("./code/2_1_simulate_shocks.R")
 
-shocked_Economies <- simulate_shocks(the_data[[1]][[1]], "laplace", the_data[[2]], n_shocks = 2*10^4)
+shocked_Economies <- simulate_shocks(the_data[[1]][[1]], "laplace", the_data[[2]], n_shocks = 10^3)
 
-shocked_Economies_normal <- simulate_shocks(the_data[[1]][[1]], "normal", the_data[[2]], n_shocks = 2*10^4)
+shocked_Economies_normal <- simulate_shocks(the_data[[1]][[1]], "normal", the_data[[2]], n_shocks = 10^3)
 
 
 ```
+
+
+
 
 ### 1 Laplacian (double exponential) shocks
 
@@ -43,11 +45,7 @@ library(ggplot2)
 library(ggExtra)
 #library(ggridges)
 # https://hydroecology.net/plotting-marginal-distributions-redux/
-'ggplot(data= shocked_Economies$shock_output , aes(timestep, networkedEconomy)) + geom_line() + 
-  geom_vridgeline(data = res.select, aes(group = time, width = ..density..), 
-                  stat = "ydensity", scale = 5000, fill = NA, color = "blue", size = 1) '
 
-#ggplot(data=shocked_Economies$shock_output, aes(timestep, networkedEconomy)) + geom_point() + geom_line()
 
 ylimits <- max(shocked_Economies$Shocks$Shocks)
 p1 <- ggplot(data=shocked_Economies$Shocks, aes(timestep, Shocks)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = length(shocked_Economies$Shocks$Shocks) * (1/4), y = -ylimits, label =  paste("sd = ", round(sd(shocked_Economies$Shocks[["Shocks"]]), digits = 3))) + ylim(c(-ylimits,ylimits)) # suppress points, only show lines
@@ -55,19 +53,12 @@ p1 <- ggplot(data=shocked_Economies$Shocks, aes(timestep, Shocks)) + geom_point(
 ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
 # https://github.com/daattali/ggExtra/issues/109
-'p2 <- ggplot(data=d1, aes(timestep, out_agg)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -3.7, label =  paste("sd = ", round(sd(out_agg), digits = 3))) # suppress points, only show lines
-ggMarginal(p2, margins="y", type = "histogram", fill=NA)'
-
-
-'c1 <- rgb(169, 169, 169, max = 255, alpha = 10)
-hist(out_agg, breaks = 1000, xlim = c(-15,15), col = c1)
-par(new=TRUE)
-plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")'
-
-
 
 
 ```
+
+
+
 ```{r timeseries_AggOut_homogenousEconomy}
 
 
@@ -77,10 +68,14 @@ ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://github.com/daattali/ggExtra/issues/109
 
 
-
+# calculate predicted volatility
+predicted_stddev_homog_laplace <- (1/ sqrt(71)) * sd(shocked_Economies$Shocks[["Shocks"]])
 
 
 ```
+
+The standard deviation predicted by the analytical results is `r predicted_stddev_homog_laplace`.
+
 Volatility of aggregate output in networked economy has decreased compared to shocks but is higher than in homogenous economy. Due to the law of large numbers, the more disaggregated the economy gets (n_sectors --> $\infty$) the lower should be the volatility. With more sectors, the aggregate output time series will center narrower and narrower around the mean.
 
 
@@ -93,58 +88,40 @@ ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://github.com/daattali/ggExtra/issues/109
 
 
-# is it fat tailed? check CCDF
-# QQ-plot
+# is it fat tailed? check QQ-plot
+
+# calculate predicted volatility
+predicted_stddev_netw_laplace <- (shocked_Economies$euklidian_norm_v_tibble$networkedEconomy) * sd(shocked_Economies$Shocks[["Shocks"]])
 
 
 ```
 
+The standard deviation predicted by the analytical results with the influence vector v is `r predicted_stddev_netw_laplace`.
 
-```{r timeseries_AggOut_heterogenousOutputEconomy}
+
+```{r timeseries_AggOut_heterogenousNetworkedEconomy}
+
+p1 <- ggplot(data=shocked_Economies$shock_output, aes(timestep, heterogeneousnetworkedEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = length(shocked_Economies$shock_output$timestep) * (1/6), y = -ylimits*0.9, label =  paste("sd = ", round(sd(shocked_Economies$shock_output[["heterogeneousnetworkedEconomy"]]), digits = 3))) + ylim(c(-ylimits,ylimits)) # suppress points, only show lines
+ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
+# https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
+# https://github.com/daattali/ggExtra/issues/109
 
 
+# is it fat tailed? check QQ-plot
+
+# calculate predicted volatility
+predicted_stddev_hetnetw_laplace <- (shocked_Economies$euklidian_norm_v_tibble$heterogeneousnetworkedEconomy) * sd(shocked_Economies$Shocks[["Shocks"]])
 
 
 
 
 
 ```
+The standard deviation of aggregate output is even larger than the standard deviation of shocks when the influence vector is the sum of output shares and output multipliers.
 
 
 
-```{r, eval=FALSE}
-#-----
-# CCDF
-#-----
-
-out_agg_sorted = sort(out_agg, decreasing = TRUE)
-CCD = cumsum(out_agg_sorted)
-prob = cumsum(1:n_shocks)
-sum(out_agg)
-plot(1:n_shocks, CCD)
-plot(out_agg_sorted ,prob)
-plot(log(out_agg_sorted), log(prob))
-
-x = seq(from= -15, to = 15, length.out=1000)
-CCDF_normal = sort(pnorm(x,mean(out_agg), sd(out_agg)), decreasing = TRUE)
-plot(log(CCDF_normal),log(cumsum(1:1000)) , type = "l")
-lines(log(CCDF_normal),log(cumsum(1:1000)))
-
-
-
-# how does the tail of a normal cdf look like? plot also in picture
-# https://stackoverflow.com/questions/59270647/how-to-plot-the-standard-normal-cdf-in-r
-# https://stats.stackexchange.com/questions/26903/interpreting-the-difference-between-lognormal-and-power-law-distribution-networ
-# https://demonstrations.wolfram.com/PowerLawTailsInLogNormalData/
-# wolframalpha shrinks distribution further and further to tail
-
-plot(pnorm(-5:10, mean=0, sd=4))
-curve(pnorm, from = -5, to=2)
-```
-
-
-
-#### 1.1 Q-Q plots aggregate output US network economy and shocks
+#### 1.1 Q-Q plots aggregate output and laplacian shocks
 
 With too low shock sample size aggregate output appears to be less normal distributed than shocks.
 
@@ -166,14 +143,26 @@ ggplot(data = shocked_Economies$Shocks, aes(sample=Shocks)) + geom_qq() + geom_q
 
 
 
-#### 1.2 Q-Q plots aggregate output homogenous economy and shocks
-
 ```{r QQ-plot_homogenousVSshocks, fig.show="hold", out.width="50%"}
 
 ggplot(data = shocked_Economies$shock_output, aes(sample=homogeneousEconomy* (1/shocked_Economies$euklidian_norm_v_tibble$homogeneousEconomy))) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("homogeneous")
 ggplot(data = shocked_Economies$Shocks, aes(sample=Shocks)) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("shocks")
 
 ```
+
+
+
+```{r QQ-plot_heterogeneousnetworkedVSshocks, fig.show="hold", out.width="50%"}
+
+#fluctuations <- bind_cols(list(out_agg = out_agg, shocks = Shocks[1,]))
+
+ggplot(data = shocked_Economies$shock_output, aes(sample=heterogeneousnetworkedEconomy* (1/shocked_Economies$euklidian_norm_v_tibble$heterogeneousnetworkedEconomy))) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("heterogeneousnetworked")
+ggplot(data = shocked_Economies$Shocks, aes(sample=Shocks)) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("shocks")
+
+
+```
+
+
 ### 2 Normal shocks
 
 ```{r shock-timeseries_normal}
@@ -193,17 +182,6 @@ p1 <- ggplot(data=shocked_Economies_normal$Shocks, aes(timestep, Shocks)) + geom
 ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
 # https://github.com/daattali/ggExtra/issues/109
-'p2 <- ggplot(data=d1, aes(timestep, out_agg)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = 90, y = -3.7, label =  paste("sd = ", round(sd(out_agg), digits = 3))) # suppress points, only show lines
-ggMarginal(p2, margins="y", type = "histogram", fill=NA)'
-
-
-'c1 <- rgb(169, 169, 169, max = 255, alpha = 10)
-hist(out_agg, breaks = 1000, xlim = c(-15,15), col = c1)
-par(new=TRUE)
-plot(dnorm(x, mean = mean(out_agg), sd=sd(out_agg)), type = "l", col="green")'
-
-
-
 
 ```
 
@@ -217,11 +195,14 @@ ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # https://github.com/daattali/ggExtra/issues/109
 
 
-
+# calculate predicted volatility
+predicted_stddev_homog_normal <- (1/ sqrt(71)) * sd(shocked_Economies_normal$Shocks[["Shocks"]])
 
 
 ```
 
+
+The standard deviation predicted by the analytical results is `r predicted_stddev_homog_normal`.
 
 
 ```{r timeseries_AggOut_networkedEconomy_normal}
@@ -236,11 +217,35 @@ ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
 # is it fat tailed? check CCDF
 # QQ-plot
 
+# predicted standard deviation
+predicted_stddev_netw_normal <- (shocked_Economies_normal$euklidian_norm_v_tibble$networkedEconomy) * sd(shocked_Economies_normal$Shocks[["Shocks"]])
+
 
 ```
 
+Using the lower bound approximation of the influence vector v, only including the direct and first order effects, the predicted standard deviation is . And for the influence vector v with all higher order effects: `r predicted_stddev_netw_normal`.
 
-#### 2.1 Q-Q plots aggregate output network economy and normal shocks
+
+
+```{r timeseries_AggOut_heterogeneousnetworkedEconomy_normal}
+
+
+p1 <- ggplot(data=shocked_Economies_normal$shock_output, aes(timestep, heterogeneousnetworkedEconomy)) + geom_point(alpha=0) + geom_line() + theme_minimal() + annotate("text", x = length(shocked_Economies_normal$shock_output$timestep) * (1/6), y = -ylimits*0.9, label =  paste("sd = ", round(sd(shocked_Economies_normal$shock_output[["heterogeneousnetworkedEconomy"]]), digits = 3))) + ylim(c(-ylimits,ylimits)) # suppress points, only show lines
+ggMarginal(p1, margins="y", type = "histogram", fill=NA) #type="density"
+# https://stackoverflow.com/questions/60279826/add-marginal-density-plot-based-on-subset-of-plotted-data
+# https://github.com/daattali/ggExtra/issues/109
+
+
+# is it fat tailed? check CCDF
+# QQ-plot
+
+# predicted standard deviation
+predicted_stddev_hetnetw_normal <- (shocked_Economies_normal$euklidian_norm_v_tibble$heterogeneousnetworkedEconomy) * sd(shocked_Economies_normal$Shocks[["Shocks"]])
+
+
+```
+
+#### 2.1 Q-Q plots aggregate output and normal shocks
 
 ```{r QQ-plot_networkedVSshocks_normal, fig.show="hold", out.width="50%"}
 
@@ -253,7 +258,7 @@ ggplot(data = shocked_Economies_normal$Shocks, aes(sample=Shocks)) + geom_qq() +
 ```
 
 
-#### 2.2 Q-Q plots aggregate output homogeneous economy and normal shocks
+
 
 ```{r QQ-plot_homogenousVSshocks_normal, fig.show="hold", out.width="50%"}
 
@@ -261,3 +266,71 @@ ggplot(data = shocked_Economies_normal$shock_output, aes(sample=homogeneousEcono
 ggplot(data = shocked_Economies_normal$Shocks, aes(sample=Shocks)) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("shocks")
 
 ```
+
+
+```{r QQ-plot_heterogeneousnetworkedVSshocks_normal, fig.show="hold", out.width="50%"}
+
+ggplot(data = shocked_Economies_normal$shock_output, aes(sample=heterogeneousnetworkedEconomy* (1/shocked_Economies_normal$euklidian_norm_v_tibble$heterogeneousnetworkedEconomy))) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("heterogeneousnetworked")
+ggplot(data = shocked_Economies_normal$Shocks, aes(sample=Shocks)) + geom_qq() + geom_qq_line() + theme_minimal() + ggtitle("shocks")
+
+```
+
+
+```{r table_shock_volatility}
+
+shockdistr <- c("normal", "laplace")
+shocks <- c(sd(shocked_Economies_normal$Shocks[["Shocks"]]), sd(shocked_Economies$Shocks[["Shocks"]]))
+homogeneous <- c(predicted_stddev_homog_normal, predicted_stddev_homog_laplace)
+networked <- c(predicted_stddev_netw_normal, predicted_stddev_netw_laplace)
+heterogeneousnetworked <- c(predicted_stddev_hetnetw_normal, predicted_stddev_hetnetw_laplace)
+
+
+shock_volatility <- tibble::tibble(shockdistr, shocks, homogeneous, networked, heterogeneousnetworked)
+print(shock_volatility)
+
+```
+
+
+```{r, comment=NA}
+
+library(xtable)
+xtable(shock_volatility, type = "latex")
+
+```
+
+
+
+#### 3. influence vector v CCDF
+
+```{r plot_v_CCDF}
+
+CCDFs <- shocked_Economies_normal$v %>% map(sort, decreasing=TRUE) %>% as_tibble()
+CCDFs["CCDF"] <- (1:length(CCDFs$homogeneousEconomy))/length(CCDFs$homogeneousEconomy)
+
+CCDFs_long <- CCDFs %>% pivot_longer(1:3, values_to = "v", names_to = "heterogeneity")
+
+ggplot(data=CCDFs_long) + geom_point(aes(log(v),log(CCDF), color=heterogeneity)) + theme_minimal()
+
+```
+
+Calculate the statistic delta indicating tail risk.
+
+```{r delta_tailrisk}
+
+delta_homog <- max(shocked_Economies_normal$v$homogeneousEconomy)/(shocked_Economies$euklidian_norm_v_tibble$homogeneousEconomy/sqrt(71))
+
+delta_net <- max(shocked_Economies_normal$v$networkedEconomy)/(shocked_Economies$euklidian_norm_v_tibble$networkedEconomy/sqrt(71))
+
+delta_hetnet <- max(shocked_Economies_normal$v$heterogeneousnetworkedEconomy)/(shocked_Economies$euklidian_norm_v_tibble$heterogeneousnetworkedEconomy/sqrt(71))
+
+delta_homog
+delta_net
+delta_hetnet
+
+
+delt <- tibble(homogeneous = delta_homog, networked = delta_net, heterogeneousnetworked = delta_hetnet)
+library(xtable)
+xtable(delt, type = "latex")
+
+```
+

@@ -1,0 +1,86 @@
+#--------------------------------#
+0_IOtoTechnicalCoefficientMatrix.R
+#--------------------------------#
+Input: Input-Output tables .csv
+Ouput: Wyear.csv, Xyear.csv, Ayear.csv
+
+
+#------------------#
+1_1_nestings_CCDFs.R
+#------------------#
+Input: a list of matrices W. 
+Can, if required, normalise the matrix and delete zeros. 
+Output: a data frame with the CCDF for each matrix W.
+
+
+#-------------------------#
+1_2_estimations_outdegree.R
+#-------------------------#
+Input: data frame with CCDFs
+Output: list of 6 data frames: data of fitted functions for plots, estimated parameters, CCDF of the out-degrees, outputs of likelihood-ratio tests, one-sided p-values, two-sided p-values.
+
+
+#------------------------#
+1_3_readAndRunOutdegrees.R
+#------------------------#
+Input: Wyear.csv
+uses 1_1_nestings_CCDFs.R
+Output: a data frame with the CCDF of the out-degrees for each year.
+
+
+
+#-----------------------#
+1_4_readAndRunIndegrees.R
+#-----------------------#
+Input: Ayear.csv
+uses 1_1_nestings_CCDFs.R
+Output: a data frame with indegrees.
+
+
+#-------------------#
+2_1_simulate_shocks.R
+#-------------------#
+
+#-------------#
+NetworkPlot.Rmd
+#-------------#
+Input: matrix A
+Output: network plot
+
+
+#-------------------------#
+GermanIndegrees_results.Rmd
+#-------------------------#
+Input: data frame of Indegrees coming from 1_4_readAndRunIndegrees.R
+Output: Tables and plots with indegree statistics
+
+
+#------------------------------------#
+GermanFirstOrderOutdegrees_results.Rmd
+#------------------------------------#
+Input: data frames with estimation results coming from 1_2_estimations_outdegree.R
+Output: Plots and tables of estimation results.
+
+
+#-------------------------------------#
+GermanSecondOrderOutdegrees_results.Rmd
+#-------------------------------------#
+Input: data frames with estimation results coming from 1_2_estimations_outdegree.R
+Output: Plots and tables of estimation results.
+
+
+#------------------------#
+German-ShockSimulation.Rmd
+#------------------------#
+Input: data frames with timeseries of shocks and aggregate output coming from 2_1_simulate_shocks.R
+Output: Plots and QQ-plots of timeseries. CCDF of 3 influence vectors.
+
+
+
+#---------------------------------#
+CostshareVersusOutputmultiplier.Rmd
+#---------------------------------#
+Input: matrix W, sectoral outputs X
+Output: Plots of cost share versus influence vectors and output multiplier.
+
+

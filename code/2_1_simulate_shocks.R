@@ -34,8 +34,10 @@ simulate_shocks <- function(W, shock_distribution, X, n_shocks){
   # 3 Calibration with Domar weights matched to the corresponding values in the U.S. data.
   # I don't have Domar weights, or is output share Domar weight???
   # I use sector sales / aggregate output as Domar weight
+  outputshare <- X /sum(X)
+  heterogeneousnetworkedEconomy <- outputshare[,1] * colSums(L)
   #heterogenousOutputEconomy <- X[[1]] / sum(X)   #final outputs X must be cut to 71 industries first
-  v <- lst(homogeneousEconomy, networkedEconomy) # , heterogenousOutputEconomy 
+  v <- lst(homogeneousEconomy, networkedEconomy, heterogeneousnetworkedEconomy) # , heterogenousOutputEconomy 
   
   #euklidian_norm_v <- v %>% map_dfc(calc_euklid_norm_vec) 
   euklidian_norm_v <- v %>% map(calc_euklid_norm_vec) 
@@ -48,7 +50,7 @@ simulate_shocks <- function(W, shock_distribution, X, n_shocks){
   
   #ff <- v %>% mutate(across(everything(), ~ shocking(.x, n_shocks, Shocks)))
   
-  return(lst(Shocks=tibble(timestep=1:(n_shocks*n), Shocks), shock_output, euklidian_norm_v_tibble <- map_dfc(.x = euklidian_norm_v, .f = ~ .x)))
+  return(lst(Shocks=tibble(timestep=1:(n_shocks*n), Shocks), shock_output, euklidian_norm_v_tibble <- map_dfc(.x = euklidian_norm_v, .f = ~ .x), v))
 }
 
 calc_euklid_norm_vec <- function(x) sqrt(sum(x^2))

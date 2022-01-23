@@ -11,10 +11,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, echo=FALSE, message=FALSE}
 
 
-source("./1_4_readAndRunIndegrees.R")
+source("./code/1_4_readAndRunIndegrees.R")
 
 years <- 2002
-In <- readrun_matrices("US", years, bs=FALSE)
+In <- readrun_matrices("US", years, "indegrees")
 
 
 ```

@@ -2,7 +2,7 @@ library(dplyr)
 library(purrr)
 
 
-readrun_matrices <- function(country, years, bs){
+readrun_matrices <- function(country, years, distribution){
   source("./code/1_1_nestings_CCDFs.R")
   
   source("./code/1_2_estimations_outdegree.R")
@@ -16,7 +16,7 @@ readrun_matrices <- function(country, years, bs){
     
     names(CC) <- c(1972, 1977, 1982, 1987, 1992, 1997, 2002)
     
-    OutdegreesCCDF_nested <- CC %>% nesting_normalisingCCDFs(0,1,0, "indegree")
+    OutdegreesCCDF_nested <- CC %>% nesting_normalisingCCDFs(0,1,0, distribution)
     
     #OutdegreesCCDF_nested_0297 <- OutdegreesCCDF_nested %>% filter(year %in% c(1997,2002))
     #OutdegreesCCDF_nested_02 <- OutdegreesCCDF_nested %>% filter(year==years)
@@ -28,12 +28,14 @@ readrun_matrices <- function(country, years, bs){
   if (country == "DE"){
     setwd("./data/German")
     
-    W <- c("W_nonnormalized2015.csv", "W_nonnormalized2016.csv", "W_nonnormalized2017.csv")%>% 
+    #need a non-normalized matrix here!!!
+    W <- c("A2015.csv", "A2016.csv", "A2017.csv")%>% 
       map(read.table, header=FALSE, sep=";")
     
     names(W) <- c(2015, 2016, 2017)
     
-    OutdegreesCCDF_nested <- W %>% nesting_normalisingCCDFs(0,0,1, "indegree")
+    
+    OutdegreesCCDF_nested <- W %>% nesting_normalisingCCDFs(0,0,1, distribution)
     
     #OutdegreesCCDF_nested_subperiod <- OutdegreesCCDF_nested %>% filter(year==years)
     

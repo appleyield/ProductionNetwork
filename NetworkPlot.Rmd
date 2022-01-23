@@ -7,16 +7,14 @@ output: github_document
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
+
 ```{r, message=FALSE, warning=FALSE}
 
-# read W: normalised or nonnormalised?
-
-'library(readr)
-Ww <- read_delim("./data/German/W2015.csv", col_names = FALSE, delim=";")'
+# read A
 
 source("./code/1_3_readAndRunOutdegrees.R")
 
-the_data_DE <- readrun_matrices("DE", "shock")
+the_data_DE <- readrun_matrices("DE", "shock", order=1)
 
 #the_data_US <- readrun_matrices("US", "shock")
 
@@ -28,88 +26,25 @@ the_data_DE <- readrun_matrices("DE", "shock")
 
 # make edgelist from matrix
 
-#W <- the_data_DE[[1]][["2015"]]
-W <- as_tibble(the_data_DE[[1]][["2015"]])
+A <- as_tibble(the_data_DE[[1]][["2015"]])
   
 library(igraph)
 
 val <- c()
-I <- dim(W)[1]
+I <- dim(A)[1]
 for(i in 1:I){
-  val[((i*I)-(I-1)):(i*I)] <- W[,i][[1]]
+  val[((i*I)-(I-1)):(i*I)] <- A[,i][[1]]
 }
 
 connections = data.frame(from= rep(1:I, each=I) , to = rep(1:I,I) , value= val)
 
-
-'library(igraph)
-Z_igraph <- graph_from_adjacency_matrix(as.matrix(W), mode = "directed", weighted=TRUE)
-
-
-ggraph(Z_igraph, layout = "circle") + geom_conn_bundle(data = get_con(from = connections$from, to = connections$to, col=connections$value), alpha = 0.1)  + geom_node_point() + coord_fixed() + scale_edge_color_continuous(low="skyblue", high="darkviolet")'
-# node size: degree
-# https://www.data-imaginist.com/2017/ggraph-introduction-layouts/
-
-#https://stackoverflow.com/questions/65297531/specifying-color-gradient-for-connection-bundles-in-ggraph
-#https://github.com/thomasp85/ggraph/issues/122
 
 k_out <- colSums(W)
 
 library(ggraph)
 
 g = graph_from_data_frame(connections)
-ggraph(g, layout = "circle") + geom_edge_link(aes(width=connections$value, alpha=connections$value),arrow = arrow(length = unit(1, "mm")),end_cap = circle(2, "mm"))  + geom_node_point(aes(size=k_out), shape=21, fill="white") + geom_node_text(aes(label=1:I, size=k_out/7))+ coord_fixed() + scale_edge_width(range=c(0.01,1)) + scale_edge_alpha(range = c(0.01, 1)) + theme_graph(background = "white")
-
-
-
-'
-ggraph(g, layout = "circle") + geom_edge_link(aes(width=connections$value, alpha=connections$value),arrow = arrow(length = unit(1, "mm")),end_cap = circle(2, "mm"))  + geom_node_point(aes(size=k_out), shape=21, fill="white") + geom_node_text(aes(label=1:I, size=k_out/7))+ coord_fixed() + scale_edge_width(range=c(0.01,1)) + scale_edge_alpha(range = c(0.01, 1)) + theme_graph(background = "white")'
-
-
-
-
-```
-
-
-```{r plot3_network2002US, eval=FALSE}
-
-# make edgelist from matrix
-
-W <- as_tibble(the_data_US[["2002"]])
-  
-library(igraph)
-
-val <- c()
-I <- dim(W)[1]
-for(i in 1:I){
-  val[((i*I)-(I-1)):(i*I)] <- W[,i][[1]]
-}
-
-connections = data.frame(from= rep(1:I, each=I) , to = rep(1:I,I) , value= val)
-
-
-'library(igraph)
-Z_igraph <- graph_from_adjacency_matrix(as.matrix(W), mode = "directed", weighted=TRUE)
-
-
-ggraph(Z_igraph, layout = "circle") + geom_conn_bundle(data = get_con(from = connections$from, to = connections$to, col=connections$value), alpha = 0.1)  + geom_node_point() + coord_fixed() + scale_edge_color_continuous(low="skyblue", high="darkviolet")'
-# node size: degree
-# https://www.data-imaginist.com/2017/ggraph-introduction-layouts/
-
-#https://stackoverflow.com/questions/65297531/specifying-color-gradient-for-connection-bundles-in-ggraph
-#https://github.com/thomasp85/ggraph/issues/122
-
-k_out <- colSums(W)
-
-g = graph_from_data_frame(connections)
-
-
-library(ggraph)
-
-ggraph(g, layout = "circle") + geom_edge_link(aes(width=connections$value, alpha=connections$value),arrow = arrow(length = unit(1, "mm")),end_cap = circle(2, "mm"))  + geom_node_point(aes(size=k_out), shape=21, fill="white") + geom_node_text(aes(label=1:I, size=k_out/7))+ coord_fixed() + scale_edge_width(range=c(0.01,1)) + scale_edge_alpha(range = c(0.01, 1)) + theme_graph(background = "white")
-
-
-
+ggraph(g, layout = "circle") + geom_edge_link(aes(width=connections$value, alpha=connections$value),arrow = arrow(length = unit(1, "mm")),end_cap = circle(2, "mm"))  + geom_node_point(aes(size=k_out), shape=21, fill="white") + geom_node_text(aes(label=1:I, size=k_out/7))+ coord_fixed() + scale_edge_width(range=c(0.01,1)) + scale_edge_alpha(range = c(0.01, 1)) + theme_graph(background = "white") 
 
 ```
 

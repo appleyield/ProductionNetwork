@@ -4,17 +4,17 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 ```
 
 
 ```{r, echo=FALSE, message=FALSE}
 
 
-source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_4_readAndRunIndegrees.R")
+source("./code/1_4_readAndRunIndegrees.R")
 
 years <- 2015
-In <- readrun_matrices("DE", years, bs=FALSE)
+In <- readrun_matrices("DE", years, "indegree")
 
 
 ```
@@ -28,36 +28,73 @@ In <- readrun_matrices("DE", years, bs=FALSE)
 # map_dfr doesn't work when list entries are named vectors, must be named tibbles
 WI <- In %>% map(as_tibble) %>% map_dfr(~.x, .id = "year")
 
+```
 
-#wi <- as_tibble(In[[1]])
-#names(wi) <- c(column_name= "indegree")
-#max(wi)
-#min(wi)
 
-#in_smooth = density(wi,kernel = "gaussian", from = min(wi), to=max(wi))
-#plot(in_smooth$x, in_smooth$y, main = "Estimated PDF of first order indegree")
-#lines(in_smooth$x, in_smooth$y, col="red")
+```{r}
+
+# Indegree summary statistics
+data.frame(sapply(In, min), sapply(In, mean), sapply(In, max))
 
 ```
 
 
-```{r, fig.show="hold", out.width="50%", echo=FALSE, message=FALSE}
+```{r Indegree_distribution, fig.show="hold", out.width="50%", echo=FALSE, message=FALSE}
 
 library(ggplot2)
 
 # http://www.sthda.com/english/articles/32-r-graphics-essentials/133-plot-one-variable-frequency-graph-density-distribution-and-more/
-#ggplot(data=wi, aes(x=value)) + geom_histogram(aes(y=..density..), fill="transparent", colour="black") + geom_density() + theme_minimal()
-
-#ggplot(data=wi, aes(x=indegree)) + stat_bin(aes(y=..density..), geom = "step") + geom_density() + theme_minimal()
 
 ggplot(data=(WI %>% filter(year==years)), aes(x=value)) + stat_bin(aes(y=..density..), geom = "step") + geom_density() + theme_minimal() + xlab("indegree") + ggtitle(years)
 
 
 
-
-
 ggplot(data = WI, aes(x=value)) + stat_density(aes(colour=year), geom = "line", position = "identity") + theme_minimal() + xlab("indegree")
 
+
+```
+
+```{r}
+
+A <- readrun_matrices("DE", years, "forwardlinkage")
+
+A_matrix <- list()
+for (i in 1:3){
+  A_matrix[[i]] <- as.matrix(A[[i]])
+}
+
+```
+```{r}
+
+data.frame(sapply(A_matrix, min), sapply(A_matrix, mean), sapply(A_matrix, max))
+
+```
+Entries in the technical coefficient matrix A of 2015 are in the range [0, 0.539262]. Range for Acemoglus matrix A of 2002: [0, 0.6387209].
+
+```{r}
+# how many zeros?
+zeros <- function(x){length(which(x == 0))}
+relzeros <- function(x){length(which(x == 0))/71^2}
+
+data.frame(sapply(A, zeros), sapply(A, relzeros))
+
+71^2
+```
+
+```{r}
+
+## self-loops
+
+sum(A[[1]]) == sum(A_matrix[[1]])
+nrselfloops <- function(x){length(which(diag(x) == 0))}
+meanselfloops <- function(x){sum(diag(x))/(71-nrselfloops(x))}
+maxselfloops <- function(x){max(diag(x))}
+minselfloops <- function(x){min(diag(x))}
+
+data.frame(sapply(A_matrix, nrselfloops), sapply(A_matrix, meanselfloops), sapply(A_matrix, maxselfloops))
+
+
+71-4
 
 ```
 

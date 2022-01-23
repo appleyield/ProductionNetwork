@@ -15,15 +15,15 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 #https://stackoverflow.com/questions/38138307/is-it-possible-to-host-interactive-r-markdown-files-on-github-pages
 
 
-  source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_3_readAndRunOutdegrees.R")
+  source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/ProductionNetwork/code/1_3_readAndRunOutdegrees.R")
 
-source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_2_estimations_outdegree_smaller.R")
+source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/ProductionNetwork/code/1_2_estimations_outdegree.R")
 
-
+#years <- c(1972, 1977, 1982, 1987, 1992, 1997, 2002)
 years=c(2002)
 #years=2002
 bs=TRUE
-OutdegreesCCDF_nested <- readrun_matrices("US", "outdegrees")
+OutdegreesCCDF_nested <- readrun_matrices("US", "outdegree", years)
 
 # filter outdegree?
 #OutdegreesCCDF_nested_subperiod <- OutdegreesCCDF_nested %>% filter(year==years)

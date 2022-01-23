@@ -11,23 +11,17 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 
 
 ```{r, echo=FALSE, message=FALSE}
-# https://gist.github.com/JoshuaTPierce/b919168421b40e06481080eb53c3fb2f
-
-#https://stackoverflow.com/questions/38138307/is-it-possible-to-host-interactive-r-markdown-files-on-github-pages
 
 
-  source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_3_readAndRunOutdegrees.R")
+source("./code/1_3_readAndRunOutdegrees.R")
 
-source("/media/lukas/77F9-5B63/Studium/Biophysical Production Network/Daten/IO-Deutschland/1_2_estimations_outdegree_smaller.R")
-
-#yearsUS <- c(1972, 1977, 1982, 1987, 1992, 1997, 2002)
-#yearsDE <- c(2015, 2016, 2017)
+source("./code/1_2_estimations_outdegree.R")
 
 
 #years=c(2015)
 years=c(2015, 2016, 2017)
-bs=TRUE
-OutdegreesCCDF_nested <- readrun_matrices("DE", "outdegrees")
+bs=FALSE
+OutdegreesCCDF_nested <- readrun_matrices("DE", "outdegree", order = 1)
 
 # filter outdegree?
 #OutdegreesCCDF_nested_subperiod <- OutdegreesCCDF_nested %>% filter(year==years)
@@ -64,6 +58,24 @@ print(Result_tables[[2]][, c(1:5)] %>% filter(distribution %in% c("lm", "lm_GIco
 
 ```
 
+```{r, comment=NA}
+
+library(xtable)
+
+
+if (bs == TRUE){
+  # mit bootstrap
+  xtable(Result_tables[[2]][, c(1:5,7)] %>% filter(distribution %in% c("lm", "lm_GIcorrect",  "ksr", "powerlaw", "powerlaw_exogcut")), type = "latex")
+  
+}
+
+if (bs == FALSE){
+  # ohne bootstrap
+xtable(Result_tables[[2]][, c(1:5)] %>% filter(distribution %in% c("lm", "lm_GIcorrect",  "ksr", "powerlaw", "powerlaw_exogcut")), type = "latex")
+}
+
+```
+
 $~$
 
 
@@ -84,6 +96,13 @@ Result_tables[[4]]$exponential[[2]]$test_statistic
 
 ```
 
+
+```{r}
+library(xtable)
+
+xtable(Result_tables[[5]] ,type="latex")
+```
+
 P-values of two sided likelihood ratio tests. The p-values are the probability of getting a positive or negative test statistic with this value if actually no distribution fits better. The p-values for lognormal and weibull are large, therefore the test can not distinguish whether the power law or these distributions fit better. 
 
 The p-value for the exponential distribution is quite high here, thus it can not be concluded that one of the two distributions fits better.
@@ -97,22 +116,17 @@ print(Result_tables[[6]])
 
 
 
-```{r, echo=FALSE, eval=FALSE}
-
-library(xtable)
-
-# https://tex.stackexchange.com/questions/25575/how-can-i-use-a-table-generated-by-r-in-latex
-xtable(Result_tables[[2]][,1:5] %>% filter(distribution %in% c("lm", "lm_GIcorrect", "powerlaw", "powerlaw_exogcut")), type = "latex")
-
-# weibull and lognormal have tow parameters and exponential one which doesn't compare well to slope of lm, so I don't report them
+```{r}
+xtable(Result_tables[[6]], type="latex")
 
 ```
 
+
 $~$
 
-### Empirical CCDF 2002 first order outdegrees
+### Empirical CCDF 2015 first order outdegrees
 
-```{r, message=FALSE}
+```{r CCDF_fo_2015, message=FALSE}
 
 library(ggplot2)
 
@@ -126,7 +140,7 @@ $~$
 ### Plots of fitted distributions versus fitted power law
 #### Linear Regression (left) and linear regression with GI correction (right) versus power law (20% tail)
 
-```{r, echo=FALSE, results='hide', fig.show="hold", out.width="50%"}
+```{r LMandGIvsPL_exogtail, echo=FALSE, results='hide', fig.show="hold", out.width="50%"}
 
 library(ggplot2)
 
@@ -137,37 +151,6 @@ ggplot() + geom_point(data = (OutdegreesCCDF_nested %>% filter(year==years[1]) %
   geom_line(data = (Result_tables[[1]] %>% filter(year==years[1]) %>% filter(distribution %in% c("lm_GIcorrect", "powerlaw_exogcut"))) , mapping = aes(x=log(x), y=log(y), color=distribution, linetype=distribution)) + theme_minimal() #+ ylim(-7.5,0)
 
 
-
-
-# To do:
-#Include the standard deviation of the lm slope by adding a custom ribbon:
-#https://stackoverflow.com/questions/14636052/using-smooth-in-ggplot2-to-fit-a-linear-model-using-the-errors-given-in-the-data
-#https://stackoverflow.com/questions/4205428/show-standard-devation-using-geom-smooth-and-ggplot
-#https://www.r-graph-gallery.com/104-plot-lines-with-error-envelopes-ggplot2.html
-
-'1.3653409 - 0.0169343
-1.3653409 + 0.0169343
-
-slope = (y_end - y_start)/(x_end - x_start)
-#ganz viele kleine Dreiecke
-# umdrehen zu ansteigend
-# dann ist y_startwert bekannt und y_endwert gesucht
-
-y_end = slope*(x_end - x_start) + y_start
-
-yy <- Result_tables[[1]] %>% filter(year==2002) %>% 
-  filter(distribution == "lm") %>% .$y %>% unname() %>% log()
-y <- c(yy[1])
-x <- Result_tables[[1]] %>% filter(year==2002) %>% 
-  filter(distribution == "lm") %>% .$x %>% log()
-
-slope = 1.3653409 - 0.0169343
-for (i in 2:length(x)){
-  y[i] = slope*(x[i] - x[i-1]) + y[i-1]
-  
-}'
-
-
 ```
 
 
@@ -176,7 +159,7 @@ $~$
 $~$
 
 #### Kernel Smoothing Regression and power law (20% tail)
-```{r}
+```{r KSvsPL_exogtail}
 
 ggplot() + geom_point(data = (OutdegreesCCDF_nested %>% filter(year==years[1]) %>% .$outdCCDF %>% .[[1]]), mapping = aes( x=log(outdegree), y=log(CCDF)), shape=1) + 
   geom_line(data = (Result_tables[[1]] %>% filter(year==years[1]) %>% filter(distribution %in% c("ksr", "powerlaw_exogcut"))) , mapping = aes(x=log(x), y=log(y), color=distribution, linetype=distribution)) + theme_minimal() #+ ylim(-7.5,0)
@@ -189,7 +172,7 @@ $~$
 
 #### Exponential distribution and power law (20\% tail, left, and optimal tail length, right)
 
-```{r, fig.show="hold", out.width="50%"}
+```{r EXPvsPL, fig.show="hold", out.width="50%"}
 
 WO_nested <- OutdegreesCCDF_nested %>% unnest(cols = c(outdCCDF))
 
@@ -209,7 +192,7 @@ $~$
 
 #### Lognormal and weibull distribution versus power law (optimal tail length)
 
-```{r, fig.show="hold", out.width="50%"}
+```{r LOGNandWEIBULLvsPL_endogtail, fig.show="hold", out.width="50%"}
 
 ggplot() + geom_point(data = (OutdegreesCCDF_nested %>% filter(year==years[1]) %>% .$outdCCDF %>% .[[1]]), mapping = aes( x=log(outdegree), y=log(CCDF)), shape=1) + 
   geom_line(data = (Result_tables[[1]] %>% filter(year==years[1]) %>% filter(distribution %in% c("lognormal", "powerlaw"))) , mapping = aes(x=log(x), y=log(y), color=distribution, linetype=distribution)) + theme_minimal()

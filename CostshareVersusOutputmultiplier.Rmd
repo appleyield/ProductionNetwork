@@ -1,0 +1,87 @@
+---
+title: "CostshareVersusOutputmultiplier 2015"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+```
+
+
+```{r}
+setwd("./data/German")
+
+year0 = 2015
+WWW <- list()
+XXX <- list()
+#WWW_up <- list()
+#Names_sectors <- list()
+for (i in 1:3){
+  year = year0 + (i-1)
+  X <- read.table(paste("X", paste(year, ".csv", sep = ""), sep = ""), sep=";", header = FALSE)
+  W <- read.table(paste("W", paste(year, ".csv", sep = ""), sep = ""), sep=";", header = FALSE)
+  #W_up <- read.table(paste("W_up", paste(year, ".csv", sep = ""), sep = ""), sep=";", header = FALSE)
+  #names_sect <- read.table(paste("Names_sectors", paste(year, ".csv", sep = ""), sep = ""), sep=";", header = FALSE)
+  WWW[[i]] <- W # https://stackoverflow.com/questions/62307226/r-dplyr-how-do-i-initialize-an-empty-list-of-data-frames
+  XXX[[i]] <- X
+  #WWW_up[[i]] <- W_up
+  #Names_sectors[[i]] <- names_sect
+  rm(X,W)
+}
+
+
+
+```
+
+
+```{r}
+
+costshare = XXX[[1]] / sum(XXX[[1]])
+
+
+# output multiplier
+I = diag(1,71,71)
+#L = solve(I-WWW_norm, tol = 1e-20) # negative values in Leontief inverse!!!!!
+alpha = 0.3333
+#alpha = 0.01  # for very small alpha, the forward linkages become really large!
+L = solve(I- (1-alpha)*WWW[[1]])
+outputmultiplier <- colSums(L)
+
+v <- outputmultiplier / 71  # homogeneous sector size
+v_tilde <- outputmultiplier * costshare[,1]
+```
+
+
+
+```{r outputshareVSv}
+library(ggplot2)
+library(ggrepel)
+
+
+costshare2015 <-costshare[1:71,1]
+num <- as.character(1:71)
+df1 = data.frame(costshare[,1], v, num)
+ggplot(data = df1, aes(costshare[,1], v, label=num)) + geom_point(cex=1) + 
+  geom_text_repel(cex=2) + theme_minimal() + annotate("text", x = 0.04, y = 0.75, label = expression(paste(1-alpha, " = 0.6667")))+
+  xlab("output share") + ylab("influence vector v") + geom_abline(intercept = 0, slope = 1, size=0.4)
+```
+```{r outputshareVSv_tilde}
+
+costshare2015 <-costshare[1:71,1]
+num <- as.character(1:71)
+df1 = data.frame(costshare[,1], v_tilde, num)
+ggplot(data = df1, aes(costshare[,1], v_tilde, label=num)) + geom_point(cex=1) + 
+  geom_text_repel(cex=2) + theme_minimal() + annotate("text", x = 0.04, y = 0.75, label = expression(paste(1-alpha, " = 0.6667")))+
+  xlab("output share") + ylab("influence vector v_tilde") + geom_abline(intercept = 0, slope = 1, size=0.4)
+```
+
+
+
+
+```{r outputshareVSoutputmultiplier}
+df1 = data.frame(costshare[,1], outputmultiplier, num)
+ggplot(data = df1, aes(costshare[,1], outputmultiplier, label=num)) + geom_point(cex=1) + 
+  geom_text_repel(cex=2) + theme_minimal() + annotate("text", x = 0.06, y = 12, label = expression(paste(1-alpha, " = 0.6667")))+
+  labs(x="output share", y= expression("output multiplier" ~ 1(I-(1-alpha)~W)^{-1}))
+```
+
